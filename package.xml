@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rosserial_bluetooth_manager</name>
+  <version>0.0.0</version>
+  <description>rosserial_bluetooth_manager</description>
+
+  <maintainer email="shinjo@jsk.imi.i.u-tokyo.ac.jp">Koki Shinjo</maintainer>
+  <author email="shinjo@jsk.imi.i.u-tokyo.ac.jp">Koki Shinjo</author>
+
+  <license>TODO</license>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_export_depend>message_generation</build_export_depend> 
+  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>python-bluez</exec_depend>
+
+  <export></export>
+</package>
