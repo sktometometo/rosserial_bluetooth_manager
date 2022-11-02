@@ -26,7 +26,7 @@ class BluetoothInterface(object):
         self.child.expect(['#', '[bluetooth]# ', pexpect.EOF])
         return self.child.before.split('\r\n')
 
-    def connect_devices(self, bt_addr, rfcomm_port):
+    def connect_device(self, bt_addr, rfcomm_port):
 
         self.child.send('pair {}\n'.format(bt_addr))
         self.child.send('yes\n')
@@ -38,12 +38,12 @@ class BluetoothInterface(object):
         self.child.send('trust {}\n'.format(bt_addr))
         self.child.expect(['#', '[bluetooth]# ', pexpect.EOF])
 
-        subprocess.run("sudo rfcomm bind {} {}".format(rfcomm_port, bt_addr), shell=True)
-        subprocess.run("sudo stty -F /dev/rfcomm{} 57600 cs8".format(rfcomm_port), shell=True)
+        subprocess.call("sudo rfcomm bind {} {}".format(rfcomm_port, bt_addr), shell=True)
+        subprocess.call("sudo stty -F /dev/rfcomm{} 57600 cs8".format(rfcomm_port), shell=True)
 
-    def disconnect_devices(self, bt_addr, rfcomm_port):
+    def disconnect_device(self, bt_addr, rfcomm_port):
 
-        subprocess.run("sudo rfcomm release {}".format(rfcomm_port), shell=True)
+        subprocess.call("sudo rfcomm release {}".format(rfcomm_port), shell=True)
 
         self.child.send('remove {}\n'.format(bt_addr))
         self.child.expect(['#', '[bluetooth]# ', pexpect.EOF])
@@ -88,12 +88,33 @@ class RosserialBluetoothManager(object):
                 BluetoothDeviceArray,
                 queue_size=1)
 
-    def get_unused_index(self):
+    def _get_unused_index(self):
 
+        rfcomm_ports = [x['rfcomm_port'] for x in self.connected_devices.values()]
         for i in range(128):
-            if i not in self.connected_devices.values():
+            if i not in rfcomm_ports:
                 return i
         return None
+
+    def _launch_serial_node(self, bt_addr):
+
+        rospy.loginfo('launching serial node for {}'.format(bt_addr))
+        rfcomm_port = self.connected_devices[bt_addr]['rfcomm_port']
+        p = subprocess.Popen(
+                ['rosrun',
+                    'rosserial_python',
+                    'serial_node.py',
+                    '_port:=/dev/rfcomm{}'.format(rfcomm_port),
+                    '_baud:=57600',
+                    '__name:=serial_node_for_{}'.format(bt_addr.replace(':','_'))]
+                )
+        self.connected_devices[bt_addr]['serial_node'] = p
+
+    def _kill_serial_node(self, bt_addr):
+
+        rospy.loginfo('killing serial node for {}'.format(bt_addr))
+        self.connected_devices[bt_addr]['serial_node'].terminate()
+        self.connected_devices[bt_addr]['serial_node'] = None
 
     def handler_connect_device(self, req):
 
@@ -104,9 +125,11 @@ class RosserialBluetoothManager(object):
                 res.message = 'Device {} is already connected.'.format(req.address)
                 return res
 
-            index = self.get_unused_index()
+            index = self._get_unused_index()
             self.interface.connect_device(req.address, index)
-            self.connected_devices[req.address] = index
+            self.connected_devices[req.address] = {'rfcomm_port': index,
+                                                   'serial_node': None}
+            self._launch_serial_node(req.address)
 
             res = ConnectDeviceResponse()
             res.success = True
@@ -121,7 +144,8 @@ class RosserialBluetoothManager(object):
                 res.message = 'Device {} is not connected.'.format(req.address)
                 return res
 
-            self.interface.disconnect_device(req.address, self.connected_devices[req.address])
+            self.interface.disconnect_device(req.address, self.connected_devices[req.address]['rfcomm_port'])
+            self._kill_serial_node(req.address)
             self.connected_devices.pop(req.address)
 
             res = DisconnectDeviceResponse()
@@ -133,9 +157,12 @@ class RosserialBluetoothManager(object):
         rate = rospy.Rate(hz)
         while not rospy.is_shutdown():
             rate.sleep()
-            devices = self.interface.scan_devices()
-            msg = BluetoothDeviceArray()
-            msg.array = [BluetoothDevice(name=name, address=address)
-                         for (address, name) in devices]
-            self.publisher.publish(msg)
-            rospy.loginfo('published {} devices'.format(len(devices)))
+            try:
+                devices = self.interface.scan_devices()
+                msg = BluetoothDeviceArray()
+                msg.array = [BluetoothDevice(name=name, address=address)
+                             for (address, name) in devices]
+                self.publisher.publish(msg)
+                rospy.loginfo('published {} devices'.format(len(devices)))
+            except UnicodeDecodeError as e:
+                rospy.loginfo('Error: {}'.format(e))

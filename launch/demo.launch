@@ -1,0 +1,9 @@
+<launch>
+    <node
+        pkg="rosserial_bluetooth_manager"
+        type="bluetooth_manager.py"
+        name="bluetooth_manager"
+        output="screen"
+        >
+    </node>
+</launch>
