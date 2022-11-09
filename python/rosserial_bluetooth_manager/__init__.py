@@ -7,6 +7,8 @@ import rospy
 
 from rosserial_bluetooth_manager.msg import BluetoothDevice
 from rosserial_bluetooth_manager.msg import BluetoothDeviceArray
+from rosserial_bluetooth_manager.msg import ConnectedDevice
+from rosserial_bluetooth_manager.msg import ConnectedDeviceArray
 from rosserial_bluetooth_manager.srv import ConnectDevice
 from rosserial_bluetooth_manager.srv import ConnectDeviceResponse
 from rosserial_bluetooth_manager.srv import DisconnectDevice
@@ -115,6 +117,10 @@ class RosserialBluetoothManager(object):
         rospy.loginfo('killing serial node for {}'.format(bt_addr))
         self.connected_devices[bt_addr]['serial_node'].terminate()
         self.connected_devices[bt_addr]['serial_node'] = None
+
+    def _publish_connected_devices(self):
+
+        msg = ConnectedDeviceArray()
 
     def handler_connect_device(self, req):
 

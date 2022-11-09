@@ -1,0 +1,1 @@
+ConnectedDevice[] array
