@@ -1,0 +1,3 @@
+- name: ros-drivers/rosserial
+  uri: https://github.com/sktometometo/rosserial.git
+  version: PR/dev-bluetooth-hardware
