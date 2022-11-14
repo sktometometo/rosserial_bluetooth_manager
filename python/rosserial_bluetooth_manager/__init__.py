@@ -43,7 +43,7 @@ class RFCOMMInterface(object):
 
 class BluetoothInterface(object):
 
-    def __init__(self, debug=False, timeout=5):
+    def __init__(self, debug=False, timeout=30):
 
         self.timeout = timeout
         self.debug = debug
