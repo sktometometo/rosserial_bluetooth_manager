@@ -105,11 +105,11 @@ class BluetoothInterface(object):
         child.expect(['Agent registered', pexpect.TIMEOUT], timeout=1)
         child.expect(['#', pexpect.TIMEOUT], timeout=1)
 
-        child.sendline('scan on')
-        child.expect([pexpect.TIMEOUT], timeout=1)
-        child.sendline('scan off')
-        child.expect(['#', pexpect.TIMEOUT], timeout=1)
-        child.expect(['#', pexpect.TIMEOUT], timeout=1)
+        #child.sendline('scan on')
+        #child.expect([pexpect.TIMEOUT], timeout=1)
+        #child.sendline('scan off')
+        #child.expect(['#', pexpect.TIMEOUT], timeout=1)
+        #child.expect(['#', pexpect.TIMEOUT], timeout=1)
 
         child.sendline('pair {}'.format(bt_address))
         ret_type_to_pairing_trial = child.expect([
