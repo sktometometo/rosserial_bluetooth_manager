@@ -1,54 +1,159 @@
 import subprocess
-import threading
-
 import pexpect
 
-import rospy
 
-from rosserial_bluetooth_manager.msg import BluetoothDevice
-from rosserial_bluetooth_manager.msg import BluetoothDeviceArray
-from rosserial_bluetooth_manager.msg import ConnectedDevice
-from rosserial_bluetooth_manager.msg import ConnectedDeviceArray
-from rosserial_bluetooth_manager.srv import ConnectDevice
-from rosserial_bluetooth_manager.srv import ConnectDeviceResponse
-from rosserial_bluetooth_manager.srv import DisconnectDevice
-from rosserial_bluetooth_manager.srv import DisconnectDeviceResponse
+class RFCOMMInterface(object):
+
+    def get_current_rfcomm_ports(self):
+
+        ret = subprocess.check_output('sudo rfcomm -a', shell=True)
+        ans = {}
+        for x in map(lambda x: x.split(' '), ret.decode('utf-8').split('\n')[:-1]):
+            rfcomm_port = int(x[0].strip('rfcomm').strip(':'))
+            bt_address = x[1]
+            ans[rfcomm_port] = bt_address
+        return ans
+
+    def bind(self, rfcomm_port, bt_address):
+
+        ret = subprocess.check_output(
+                'sudo rfcomm bind {} {}'.format(rfcomm_port, bt_address),
+                shell=True,
+                stderr=subprocess.STDOUT
+                )
+        ret = ret.decode('utf-8')
+        if 'Can\'t create device' in ret:
+            return False, ret
+        else:
+            return True, ''
+
+    def release(self, rfcomm_port):
+
+        ret = subprocess.check_output(
+                'sudo rfcomm release {}'.format(rfcomm_port),
+                shell=True,
+                stderr=subprocess.STDOUT
+                )
+        ret = ret.decode('utf-8')
+        if 'Can\'t release device' in ret:
+            return False, ret
+        else:
+            return True, ''
 
 
 class BluetoothInterface(object):
 
-    def __init__(self):
+    def __init__(self, debug=False, timeout=5):
 
-        self.child = pexpect.spawn('bluetoothctl', echo=False)
-        self.send_and_get('\n')
+        self.timeout = timeout
+        self.debug = debug
+        if self.debug:
+            import sys
+            self.logfile = sys.stdout
+        else:
+            self.logfile = None
 
-    def send_and_get(self, string):
+    def remove_device(self, bt_address):
 
-        self.child.send(string + '\n')
-        self.child.expect(['#', '[bluetooth]# ', pexpect.EOF])
-        return self.child.before.split('\r\n')
+        if self.debug:
+            child = pexpect.spawn(
+                'bluetoothctl',
+                encoding='utf-8',
+                echo=False
+                )
+            child.logfile = self.logfile
+        else:
+            child = pexpect.spawn(
+                'bluetoothctl',
+                echo=False
+                )
+        child.sendline('')
+        child.expect(['Agent registered'])
+        child.expect(['#'])
 
-    def connect_device(self, bt_addr, rfcomm_port):
+        child.sendline('remove {}'.format(bt_address))
+        ret = child.expect([
+            'Device has been removed',
+            'Device {} not available'.format(bt_address),
+            pexpect.TIMEOUT
+            ],
+            timeout=self.timeout)
 
-        self.child.send('pair {}\n'.format(bt_addr))
-        self.child.send('yes\n')
-        self.child.expect(['#', '[bluetooth]# ', pexpect.EOF])
+        if ret == 0:
+            child.terminate()
+            return True, 'Device has been removed'
+        elif ret == 1:
+            return False, 'Device {} not available'.format(bt_address)
+        else:
+            return False, 'Unknown Error'
 
-        self.child.send('trust {}\n'.format(bt_addr))
-        self.child.expect(['#', '[bluetooth]# ', pexpect.EOF])
+    def pair_device(self, bt_address):
 
-        self.child.send('trust {}\n'.format(bt_addr))
-        self.child.expect(['#', '[bluetooth]# ', pexpect.EOF])
+        if self.debug:
+            child = pexpect.spawn(
+                'bluetoothctl',
+                encoding='utf-8',
+                echo=False
+                )
+            child.logfile = self.logfile
+        else:
+            child = pexpect.spawn(
+                'bluetoothctl',
+                echo=False
+                )
+        child.sendline('')
+        child.expect(['Agent registered'])
+        child.expect(['#'])
 
-        subprocess.call("sudo rfcomm bind {} {}".format(rfcomm_port, bt_addr), shell=True)
-        subprocess.call("sudo stty -F /dev/rfcomm{} 57600 cs8".format(rfcomm_port), shell=True)
+        child.sendline('scan on')
+        child.expect([pexpect.TIMEOUT], timeout=1)
+        child.sendline('scan off')
+        child.expect(['#', pexpect.TIMEOUT], timeout=1)
+        child.expect(['#', pexpect.TIMEOUT], timeout=1)
 
-    def disconnect_device(self, bt_addr, rfcomm_port):
+        child.sendline('pair {}'.format(bt_address))
+        ret_type_to_pairing_trial = child.expect([
+            '#',
+            'Attempting to pair with {}'.format(bt_address),
+            'Device {} not available'.format(bt_address),
+            ],
+            timeout=self.timeout)
+        if ret_type_to_pairing_trial == 0:
+            print('ret_type_to_pairing_trial: {}'.format(ret_type_to_pairing_trial))
+            child.terminate()
+            return False, ''
+        if ret_type_to_pairing_trial == 2:
+            child.terminate()
+            return False, 'Device {} not available'.format(bt_address)
 
-        subprocess.call("sudo rfcomm release {}".format(rfcomm_port), shell=True)
+        ret_type_to_after_trial = child.expect([
+            'AlreadyExists',
+            'Request confirmation',
+            pexpect.TIMEOUT
+            ],
+            timeout=self.timeout)
 
-        self.child.send('remove {}\n'.format(bt_addr))
-        self.child.expect(['#', '[bluetooth]# ', pexpect.EOF])
+        if ret_type_to_after_trial == 0:
+            child.terminate()
+            return False, 'org.bluez.Error.AlreadyExists'
+        if ret_type_to_after_trial == 1:
+            child.sendline('yes')
+        elif ret_type_to_after_trial == 2:
+            child.terminate()
+            return False, 'Unknown Error'
+
+        ret_pairing = child.expect([
+            'Pairing successful',
+            pexpect.TIMEOUT
+            ],
+            timeout=self.timeout)
+
+        if ret_pairing == 0:
+            child.terminate()
+            return True, ''
+        else:
+            child.terminate()
+            return False, 'Unknown Error'
 
     def scan_devices(self):
 
@@ -65,110 +170,3 @@ class BluetoothInterface(object):
             result.append([bt_addr, bt_name])
 
         return result
-
-
-class RosserialBluetoothManager(object):
-
-    def __init__(self):
-
-        self.interface = BluetoothInterface()
-
-        # dict from bt_addr to rfcomm port
-        self.connected_devices = {}
-        self.lock = threading.Lock()
-
-        self.srv_connect_device = rospy.Service(
-                '~connect_device',
-                ConnectDevice,
-                self.handler_connect_device)
-        self.srv_disconnect_device = rospy.Service(
-                '~disconnect_device',
-                DisconnectDevice,
-                self.handler_disconnect_device)
-        self.publisher = rospy.Publisher(
-                '/bluetooth_devices',
-                BluetoothDeviceArray,
-                queue_size=1)
-
-    def _get_unused_index(self):
-
-        rfcomm_ports = [x['rfcomm_port'] for x in self.connected_devices.values()]
-        for i in range(128):
-            if i not in rfcomm_ports:
-                return i
-        return None
-
-    def _launch_serial_node(self, bt_addr):
-
-        rospy.loginfo('launching serial node for {}'.format(bt_addr))
-        rfcomm_port = self.connected_devices[bt_addr]['rfcomm_port']
-        p = subprocess.Popen(
-                ['rosrun',
-                    'rosserial_python',
-                    'serial_node.py',
-                    '_port:=/dev/rfcomm{}'.format(rfcomm_port),
-                    '_baud:=57600',
-                    '__name:=serial_node_for_{}'.format(bt_addr.replace(':','_'))]
-                )
-        self.connected_devices[bt_addr]['serial_node'] = p
-
-    def _kill_serial_node(self, bt_addr):
-
-        rospy.loginfo('killing serial node for {}'.format(bt_addr))
-        self.connected_devices[bt_addr]['serial_node'].terminate()
-        self.connected_devices[bt_addr]['serial_node'] = None
-
-    def _publish_connected_devices(self):
-
-        msg = ConnectedDeviceArray()
-
-    def handler_connect_device(self, req):
-
-        with self.lock:
-            if req.address in self.connected_devices.keys():
-                res = ConnectDeviceResponse()
-                res.success = False
-                res.message = 'Device {} is already connected.'.format(req.address)
-                return res
-
-            index = self._get_unused_index()
-            self.interface.connect_device(req.address, index)
-            self.connected_devices[req.address] = {'rfcomm_port': index,
-                                                   'serial_node': None}
-            self._launch_serial_node(req.address)
-
-            res = ConnectDeviceResponse()
-            res.success = True
-            return res
-
-    def handler_disconnect_device(self, req):
-
-        with self.lock:
-            if req.address not in self.connected_devices.keys():
-                res = DisconnectDeviceResponse()
-                res.success = False
-                res.message = 'Device {} is not connected.'.format(req.address)
-                return res
-
-            self.interface.disconnect_device(req.address, self.connected_devices[req.address]['rfcomm_port'])
-            self._kill_serial_node(req.address)
-            self.connected_devices.pop(req.address)
-
-            res = DisconnectDeviceResponse()
-            res.success = True
-            return res
-
-    def spin(self, hz=0.1):
-
-        rate = rospy.Rate(hz)
-        while not rospy.is_shutdown():
-            rate.sleep()
-            try:
-                devices = self.interface.scan_devices()
-                msg = BluetoothDeviceArray()
-                msg.array = [BluetoothDevice(name=name, address=address)
-                             for (address, name) in devices]
-                self.publisher.publish(msg)
-                rospy.loginfo('published {} devices'.format(len(devices)))
-            except UnicodeDecodeError as e:
-                rospy.loginfo('Error: {}'.format(e))

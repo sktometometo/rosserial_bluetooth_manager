@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from rosserial_bluetooth_manager import RosserialBluetoothManager
+from rosserial_bluetooth_manager.manager_node import RosserialBluetoothManager
 
 
 if __name__ == '__main__':
