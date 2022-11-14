@@ -15,8 +15,8 @@ uint8_t bt_address[6];
 char bt_address_str[18] = {0};
 ros::NodeHandle nh;
 std_msgs::String str_msg;
-ros::Publisher publisher("output", &str_msg);
-ros::Subscriber<std_msgs::String> subscriber("input", &messageCb);
+ros::Publisher publisher("~output", &str_msg);
+ros::Subscriber<std_msgs::String> subscriber("~input", &messageCb);
 
 const int POINT_X_FOR_BT_STATUS = 0;
 const int POINT_Y_FOR_BT_STATUS = 40;
