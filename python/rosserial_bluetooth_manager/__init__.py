@@ -57,14 +57,14 @@ class BluetoothInterface(object):
 
         if self.debug:
             child = pexpect.spawn(
-                'bluetoothctl',
+                'sudo bluetoothctl',
                 encoding='utf-8',
                 echo=False
                 )
             child.logfile = self.logfile
         else:
             child = pexpect.spawn(
-                'bluetoothctl',
+                'sudo bluetoothctl',
                 echo=False
                 )
         child.sendline('')
