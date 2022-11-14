@@ -68,8 +68,8 @@ class BluetoothInterface(object):
                 echo=False
                 )
         child.sendline('')
-        child.expect(['Agent registered'])
-        child.expect(['#'])
+        child.expect(['Agent registered', pexpect.TIMEOUT], timeout=1)
+        child.expect(['#', pexpect.TIMEOUT], timeout=1)
 
         child.sendline('remove {}'.format(bt_address))
         ret = child.expect([
@@ -102,8 +102,8 @@ class BluetoothInterface(object):
                 echo=False
                 )
         child.sendline('')
-        child.expect(['Agent registered'])
-        child.expect(['#'])
+        child.expect(['Agent registered', pexpect.TIMEOUT], timeout=1)
+        child.expect(['#', pexpect.TIMEOUT], timeout=1)
 
         child.sendline('scan on')
         child.expect([pexpect.TIMEOUT], timeout=1)
