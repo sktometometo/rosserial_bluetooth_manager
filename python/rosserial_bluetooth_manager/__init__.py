@@ -129,6 +129,7 @@ class BluetoothInterface(object):
         ret_type_to_after_trial = child.expect([
             'AlreadyExists',
             'Request confirmation',
+            'ConnectionAttemptFailed',
             pexpect.TIMEOUT
             ],
             timeout=self.timeout)
@@ -136,9 +137,12 @@ class BluetoothInterface(object):
         if ret_type_to_after_trial == 0:
             child.terminate()
             return False, 'org.bluez.Error.AlreadyExists'
-        if ret_type_to_after_trial == 1:
+        elif ret_type_to_after_trial == 1:
             child.sendline('yes')
         elif ret_type_to_after_trial == 2:
+            child.terminate()
+            return False, 'org.bluez.Error.ConnectionAttemptFailed'
+        elif ret_type_to_after_trial == 3:
             child.terminate()
             return False, 'Unknown Error'
 
