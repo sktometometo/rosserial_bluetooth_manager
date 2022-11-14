@@ -148,6 +148,8 @@ class RosserialBluetoothManager(object):
 
     def spin(self, hz=0.1):
 
+        self.bt_interface.scan_devices()
+        rospy.loginfo('Initial scannig finished')
         rate = rospy.Rate(hz)
         while not rospy.is_shutdown():
             rate.sleep()
