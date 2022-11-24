@@ -12,3 +12,9 @@ wstool update
 wstool merge rosserial_bluetooth_manager/rosserial_bluetooth_manager.rosinstall
 wstool update
 ```
+
+And add below lines to /etc/sudoers by running `sudo visudo`
+
+```
+<username of linux>    ALL=(ALL) NOPASSWD:/usr/bin/rfcomm, /bin/stty
+```
