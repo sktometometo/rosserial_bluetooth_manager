@@ -17,7 +17,11 @@ ros::Publisher pub_pressure("~pressure", &msg_pressure);
 ros::Publisher pub_imu("~imu", &msg_imu);
 
 char frame_id[128];
-float grav_accel = 9.80665;
+const float grav_accel = 9.80665;
+
+bool enable_temperature = true;
+bool enable_pressure = true;
+bool enable_imu = true;
 
 float dsp310_temperature = 0.0F;
 float dsp310_pressure = 0.0F;
@@ -51,29 +55,55 @@ void setup()
   }
   msg_imu.header.frame_id = frame_id;
 
+  nh.getParam("~enable_temperature", &enable_temperature);
+  nh.getParam("~enable_pressure", &enable_pressure);
+  nh.getParam("~enable_imu", &enable_imu);
+
   delay(1000);
   nh.loginfo("Initialized.");
 }
 
 void loop()
 {
-  Dps310PressureSensor.measureTempOnce(dsp310_temperature, 7);
-  Dps310PressureSensor.measurePressureOnce(dsp310_pressure, 7);
-  M5.IMU.getGyroData(&imu_gyroX, &imu_gyroY, &imu_gyroZ);
-  M5.IMU.getAccelData(&imu_accX, &imu_accY, &imu_accZ);
+  if (enable_temperature)
+  {
+    if (Dps310PressureSensor.measureTempOnce(dsp310_temperature, 7) != DPS__SUCCEEDED)
+    {
+      nh.logerror("Dps310 temperature measurement failed.");
+    }
+    else
+    {
+      msg_temperature.data = dsp310_temperature;
+      pub_temperature.publish(&msg_temperature);
+    }
+  }
 
-  msg_temperature.data = dsp310_temperature;
-  msg_pressure.data = dsp310_pressure;
-  msg_imu.header.stamp = nh.now();
-  msg_imu.linear_acceleration.x = grav_accel * imu_accX;  // m/secsec
-  msg_imu.linear_acceleration.y = grav_accel * imu_accY;  // m/secsec
-  msg_imu.linear_acceleration.z = grav_accel * imu_accZ;  // m/secsec
-  msg_imu.angular_velocity.x = imu_gyroX;                 // degrees / sec
-  msg_imu.angular_velocity.y = imu_gyroY;                 // degrees / sec
-  msg_imu.angular_velocity.z = imu_gyroZ;                 // degrees / sec
+  if (enable_pressure)
+  {
+    if (Dps310PressureSensor.measurePressureOnce(dsp310_pressure, 7) != DPS__SUCCEEDED)
+    {
+      nh.logerror("Dps310 pressure measurement failed.");
+    }
+    else
+    {
+      msg_pressure.data = dsp310_pressure;
+      pub_pressure.publish(&msg_pressure);
+    }
+  }
 
-  pub_temperature.publish(&msg_temperature);
-  pub_pressure.publish(&msg_pressure);
-  pub_imu.publish(&msg_imu);
+  if (enable_imu)
+  {
+    M5.IMU.getGyroData(&imu_gyroX, &imu_gyroY, &imu_gyroZ);
+    M5.IMU.getAccelData(&imu_accX, &imu_accY, &imu_accZ);
+    msg_imu.header.stamp = nh.now();
+    msg_imu.linear_acceleration.x = grav_accel * imu_accX;  // m/secsec
+    msg_imu.linear_acceleration.y = grav_accel * imu_accY;  // m/secsec
+    msg_imu.linear_acceleration.z = grav_accel * imu_accZ;  // m/secsec
+    msg_imu.angular_velocity.x = imu_gyroX;                 // degrees / sec
+    msg_imu.angular_velocity.y = imu_gyroY;                 // degrees / sec
+    msg_imu.angular_velocity.z = imu_gyroZ;                 // degrees / sec
+    pub_imu.publish(&msg_imu);
+  }
+
   nh.spinOnce();
 }
