@@ -1,0 +1,103 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=9"/>
+<meta name="generator" content="Doxygen 1.8.14"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>ICS_Class: # IcsClass</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="logo.png"/></td>
+  <td id="projectalign" style="padding-left: 0.5em;">
+   <div id="projectname">ICS_Class
+   &#160;<span id="projectnumber">2.1.0</span>
+   </div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- 構築: Doxygen 1.8.14 -->
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+var searchBox = new SearchBox("searchBox", "search",false,'検索');
+/* @license-end */
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+/* @license magnet:?xt=urn:btih:cf05388f2679ee054f2beb29a391d25f4e673ac3&amp;dn=gpl-2.0.txt GPL-v2 */
+$(function() {
+  initMenu('',true,false,'search.php','検索');
+  $(document).ready(function() { init_search(); });
+});
+/* @license-end */</script>
+<div id="main-nav"></div>
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<iframe src="javascript:void(0)" frameborder="0" 
+        name="MSearchResults" id="MSearchResults">
+</iframe>
+</div>
+
+</div><!-- top -->
+<div class="header">
+  <div class="headertitle">
+<div class="title"># IcsClass </div>  </div>
+</div><!--header-->
+<div class="contents">
+<div class="textblock"><h2>Overview</h2>
+<p>近藤科学製ICS機器をArduinoのSerialから動かすためのライブラリです。 <br />
+This library is for connecting a Kondo Kagaku ICS device from an Arudino serial port.</p>
+<h2>Description</h2>
+<p>近藤科学製サーボモータや受信機等ICS機器をArduinoで動かすためのライブラリです。 <br />
+This library is for connecting a Kondo Kagaku servo motor, receiver or other ICS device using Arudino.</p>
+<p>サーボモータの位置制御(ポジション)コマンドやストレッチ等のパラメータ変更がArduinoからできるようになります。 It enables servo motor position commands and parameter changes like for “stretch” to be performed from Arudino.</p>
+<p>受信機(KRR)に接続することで、送信機(KRC)からのデータも取得できます。 By connecting to a receiver (KRR), data can also be acquired from a transmitter (KRC).</p>
+<h2>Contents</h2>
+<p>root/ ├IcsClass_Vxxx.zip ├IcsSoftSerialClass_Vxxx.zip ├KoCustomSoftSerial.zip ├readmeTop.md (this file) ├ICS変換基板forArduino_xxx.pdf (manual) └html版_Vxxx (Class list (See to index.html))</p>
+<h2>Requirement</h2>
+<p>各圧縮されたライブラリの中身のreadme.mdファイルをご覧ください。 Refer to the compressed readme.md files, which are the contents of the library.</p>
+<h2>Usage</h2>
+<p>ライブラリは3つの圧縮ファイルに分かれています。 The library is divided into three compressed files.</p>
+<p>使用する状況に応じてライブラリをインポートしてください。 Import the library depending on conditions of use.</p>
+<ul>
+<li>Serial(HardwareSerial)を使う場合 IcsClass only</li>
+<li>SoftwareSerialを使う場合 IcsClass <a class="el" href="class_ics_soft_serial_class.html" title="近藤科学のKRSサーボをArduinoのSoftwareSerialからアクセスできるようにしたクラス ">IcsSoftSerialClass</a> KoCustomSoftSerial</li>
+</ul>
+<p>詳しくは配布フォルダのマニュアル(PDF)をご覧ください。 For details, refer to the manual (PDF) in the folder provided.</p>
+<p>コマンドの詳細については、<a href="http://kondo-robot.com/faq/ics3-5_3-6softwaremanual_2">コマンドリファレンス</a>をご覧ください。</p>
+<h2>Licence</h2>
+<p>各圧縮されたライブラリの中身のreadme.mdファイルをご覧ください。 Refer to the compressed readme.md files, which are the contents of the library.</p>
+<h2>Author</h2>
+<p>近藤科学株式会社 01/2018 Kondo Kagaku co.,ltd. 近藤科学ホームページ:(<a href="http://kondo-robot.com/">http://kondo-robot.com/</a>) </p>
+</div></div><!-- contents -->
+<!-- start footer part -->
+<hr class="footer"/><address class="footer"><small>
+構築: &#160;<a href="http://www.doxygen.org/index.html">
+<img class="footer" src="doxygen.png" alt="doxygen"/>
+</a> 1.8.14
+</small></address>
+</body>
+</html>
