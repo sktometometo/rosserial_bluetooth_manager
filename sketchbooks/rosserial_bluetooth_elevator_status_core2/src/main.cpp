@@ -19,6 +19,15 @@ ros::Publisher pub_imu("~imu", &msg_imu);
 char frame_id[128];
 float grav_accel = 9.80665;
 
+float dsp310_temperature = 0.0F;
+float dsp310_pressure = 0.0F;
+float imu_accX = 0.0F;
+float imu_accY = 0.0F;
+float imu_accZ = 0.0F;
+float imu_gyroX = 0.0F;
+float imu_gyroY = 0.0F;
+float imu_gyroZ = 0.0F;
+
 void setup()
 {
   M5.begin(true, false, true, true);
@@ -46,30 +55,8 @@ void setup()
   nh.loginfo("Initialized.");
 }
 
-void imu_calibration(int num_samples)
-{
-  float imu_accX = 0.0F;
-  float imu_accY = 0.0F;
-  float imu_accZ = 0.0F;
-  float imu_gyroX = 0.0F;
-  float imu_gyroY = 0.0F;
-  float imu_gyroZ = 0.0F;
-
-  M5.IMU.getGyroData(&imu_gyroX, &imu_gyroY, &imu_gyroZ);
-  M5.IMU.getAccelData(&imu_accX, &imu_accY, &imu_accZ);
-}
-
 void loop()
 {
-  float dsp310_temperature = 0.0F;
-  float dsp310_pressure = 0.0F;
-  float imu_accX = 0.0F;
-  float imu_accY = 0.0F;
-  float imu_accZ = 0.0F;
-  float imu_gyroX = 0.0F;
-  float imu_gyroY = 0.0F;
-  float imu_gyroZ = 0.0F;
-
   Dps310PressureSensor.measureTempOnce(dsp310_temperature, 7);
   Dps310PressureSensor.measurePressureOnce(dsp310_pressure, 7);
   M5.IMU.getGyroData(&imu_gyroX, &imu_gyroY, &imu_gyroZ);
@@ -87,6 +74,6 @@ void loop()
 
   pub_temperature.publish(&msg_temperature);
   pub_pressure.publish(&msg_pressure);
-  nh.spinOnce();
   pub_imu.publish(&msg_imu);
+  nh.spinOnce();
 }
