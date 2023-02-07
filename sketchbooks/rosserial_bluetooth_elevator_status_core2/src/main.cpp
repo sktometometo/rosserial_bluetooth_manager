@@ -32,18 +32,8 @@ float imu_gyroX = 0.0F;
 float imu_gyroY = 0.0F;
 float imu_gyroZ = 0.0F;
 
-void setup()
+void init_ros()
 {
-  M5.begin(true, false, true, true);
-  Dps310PressureSensor.begin(Wire);
-  M5.IMU.Init();
-
-  nh.initNode();
-
-  nh.advertise(pub_temperature);
-  nh.advertise(pub_pressure);
-  nh.advertise(pub_imu);
-
   while (not nh.connected())
   {
     nh.spinOnce();
@@ -58,6 +48,21 @@ void setup()
   nh.getParam("~enable_temperature", &enable_temperature);
   nh.getParam("~enable_pressure", &enable_pressure);
   nh.getParam("~enable_imu", &enable_imu);
+}
+
+void setup()
+{
+  M5.begin(true, false, true, true);
+  Dps310PressureSensor.begin(Wire);
+  M5.IMU.Init();
+
+  nh.initNode();
+
+  nh.advertise(pub_temperature);
+  nh.advertise(pub_pressure);
+  nh.advertise(pub_imu);
+
+  init_ros();
 
   delay(1000);
   nh.loginfo("Initialized.");
@@ -65,6 +70,11 @@ void setup()
 
 void loop()
 {
+  if (not nh.connected())
+  {
+    init_ros();
+  }
+
   if (enable_temperature)
   {
     if (Dps310PressureSensor.measureTempOnce(dsp310_temperature, 7) != DPS__SUCCEEDED)
